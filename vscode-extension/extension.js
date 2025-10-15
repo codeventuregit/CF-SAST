@@ -274,7 +274,6 @@ except Exception as e:
         const args = [scannerPath, '--files', ...absoluteFiles, '--json-out'];
         
         // Add SARIF output for enterprise users (optional)
-        const config = vscode.workspace.getConfiguration('cfmlSast');
         if (config.get('outputFormat') === 'sarif') {
             args[args.length - 1] = '--sarif';
         }
