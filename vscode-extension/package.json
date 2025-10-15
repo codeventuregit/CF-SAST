@@ -2,7 +2,7 @@
   "name": "cfml-sast-scanner",
   "displayName": "CFML SAST Scanner",
   "description": "Enhanced SAST scanner for ColdFusion (CFML) with CFScript support, SARIF output, baseline suppression, and .sastignore patterns. Detects SQLi, XSS, command injection, and more.",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "publisher": "CodeVenture",
   "icon": "images/icon.png",
   "engines": {
@@ -22,12 +22,7 @@
     "Linter"
   ],
   "activationEvents": [
-    "onLanguage:cfml",
-    "onCommand:cfmlSast.scanFile",
-    "onCommand:cfmlSast.scanWorkspace",
-    "onCommand:cfmlSast.createIgnoreFile",
-    "onCommand:cfmlSast.createBaseline",
-    "onCommand:cfmlSast.install"
+    "*"
   ],
   "main": "./extension.js",
   "contributes": {
