@@ -383,19 +383,42 @@ except Exception as e:
                 .replace(/'/g, '&#39;');
         };
         
-        const rows = findings.map(f => {
+        const getSeverityIcon = (severity) => {
+            switch(severity) {
+                case 'HIGH': return '🔴';
+                case 'MEDIUM': return '🟡';
+                case 'LOW': return '🔵';
+                default: return '⚪';
+            }
+        };
+        
+        const cards = findings.map(f => {
             const severity = escapeHtml(f.severity || 'UNKNOWN');
             const ruleId = escapeHtml(f.rule_id || 'N/A');
-            const location = escapeHtml(`${f.file || 'unknown'}:${f.line || '0'}`);
+            const fileName = escapeHtml(f.file ? f.file.split(/[\\\/]/).pop() : 'unknown');
+            const line = f.line || '0';
             const description = escapeHtml(f.description || 'No description');
+            const icon = getSeverityIcon(severity);
             
-            return `<tr class="${severity.toLowerCase()}">
-                <td>${severity}</td>
-                <td>${ruleId}</td>
-                <td>${location}</td>
-                <td>${description}</td>
-            </tr>`;
+            return `
+                <div class="finding-card ${severity.toLowerCase()}">
+                    <div class="card-header">
+                        <span class="severity-badge">${icon} ${severity}</span>
+                        <span class="rule-id">${ruleId}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="description">${description}</div>
+                        <div class="location">
+                            <span class="file-name">${fileName}</span>
+                            <span class="line-number">Line ${line}</span>
+                        </div>
+                    </div>
+                </div>`;
         }).join('');
+        
+        const high = findings.filter(f => f.severity === 'HIGH').length;
+        const medium = findings.filter(f => f.severity === 'MEDIUM').length;
+        const low = findings.filter(f => f.severity === 'LOW').length;
         
         return `<!DOCTYPE html>
         <html>
@@ -404,30 +427,138 @@ except Exception as e:
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>CFML SAST Results</title>
             <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-                th { background-color: #f5f5f5; font-weight: bold; }
-                .high { background-color: #ffebee; }
-                .medium { background-color: #fff3e0; }
-                .low { background-color: #f3e5f5; }
-                .summary { background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    margin: 0;
+                    padding: 20px;
+                    background: var(--vscode-editor-background);
+                    color: var(--vscode-editor-foreground);
+                    line-height: 1.5;
+                }
+                
+                .header {
+                    margin-bottom: 24px;
+                    padding-bottom: 16px;
+                    border-bottom: 1px solid var(--vscode-panel-border);
+                }
+                
+                .title {
+                    font-size: 24px;
+                    font-weight: 600;
+                    margin: 0 0 8px 0;
+                    color: var(--vscode-editor-foreground);
+                }
+                
+                .summary {
+                    display: flex;
+                    gap: 16px;
+                    margin: 16px 0;
+                }
+                
+                .stat {
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    font-weight: 500;
+                    font-size: 14px;
+                }
+                
+                .stat.high { background: rgba(244, 67, 54, 0.1); color: #f44336; }
+                .stat.medium { background: rgba(255, 152, 0, 0.1); color: #ff9800; }
+                .stat.low { background: rgba(33, 150, 243, 0.1); color: #2196f3; }
+                
+                .findings {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+                
+                .finding-card {
+                    background: var(--vscode-editor-widget-background);
+                    border: 1px solid var(--vscode-panel-border);
+                    border-radius: 8px;
+                    padding: 16px;
+                    transition: all 0.2s ease;
+                }
+                
+                .finding-card:hover {
+                    border-color: var(--vscode-focusBorder);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                
+                .card-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
+                
+                .severity-badge {
+                    font-weight: 600;
+                    font-size: 14px;
+                }
+                
+                .rule-id {
+                    font-family: 'Courier New', monospace;
+                    font-size: 12px;
+                    background: var(--vscode-badge-background);
+                    color: var(--vscode-badge-foreground);
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                }
+                
+                .description {
+                    font-size: 14px;
+                    margin-bottom: 8px;
+                    color: var(--vscode-editor-foreground);
+                }
+                
+                .location {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-size: 12px;
+                    color: var(--vscode-descriptionForeground);
+                }
+                
+                .file-name {
+                    font-family: 'Courier New', monospace;
+                    font-weight: 500;
+                }
+                
+                .line-number {
+                    background: var(--vscode-textBlockQuote-background);
+                    padding: 2px 6px;
+                    border-radius: 3px;
+                }
+                
+                .tip {
+                    margin-top: 24px;
+                    padding: 12px;
+                    background: var(--vscode-textBlockQuote-background);
+                    border-left: 4px solid var(--vscode-textLink-foreground);
+                    border-radius: 0 4px 4px 0;
+                    font-size: 13px;
+                    color: var(--vscode-descriptionForeground);
+                }
             </style>
         </head>
         <body>
-            <div class="summary">
-                <h2>🔍 CFML SAST Security Findings</h2>
-                <p>Found ${findings.length} security issue(s)</p>
-                <p><small>Tip: Use .sastignore file to exclude files or create baseline to suppress existing findings</small></p>
+            <div class="header">
+                <h1 class="title">🔍 CFML Security Scan Results</h1>
+                <div class="summary">
+                    <div class="stat high">🔴 ${high} High</div>
+                    <div class="stat medium">🟡 ${medium} Medium</div>
+                    <div class="stat low">🔵 ${low} Low</div>
+                </div>
             </div>
-            <table>
-                <thead>
-                    <tr><th>Severity</th><th>Rule ID</th><th>Location</th><th>Description</th></tr>
-                </thead>
-                <tbody>
-                    ${rows}
-                </tbody>
-            </table>
+            
+            <div class="findings">
+                ${cards}
+            </div>
+            
+            <div class="tip">
+                💡 <strong>Tip:</strong> Use .sastignore file to exclude files or create baseline to suppress existing findings
+            </div>
         </body>
         </html>`;
     }
