@@ -1,5 +1,5 @@
 {
-  "name": "@codeventure/cfml-sast-scanner",
+  "name": "cfml-sast-scanner",
   "displayName": "CFML SAST Scanner",
   "description": "Enhanced SAST scanner for ColdFusion (CFML) with CFScript support, SARIF output, baseline suppression, and .sastignore patterns. Detects SQLi, XSS, command injection, and more.",
   "version": "1.1.0",
@@ -98,6 +98,5 @@
     "url": "https://github.com/codeventuregit/CF-SAST/issues"
   },
   "homepage": "https://github.com/codeventuregit/CF-SAST",
-  "license": "MIT",
-
+  "license": "MIT"
 }
