@@ -1,0 +1,35 @@
+# CFML SAST Ignore Patterns
+# Lines starting with # are comments
+
+# Ignore test files
+*test*
+*Test*
+*/tests/*
+*/spec/*
+
+# Ignore third-party libraries
+*/lib/*
+*/vendor/*
+*/node_modules/*
+*/external/*
+
+# Ignore generated files
+*generated*
+*auto*
+*.min.cfm
+*.min.cfc
+
+# Ignore specific rules in certain files
+CF-XSS-001:*/admin/*
+CF-SQLI-001:*/legacy/*
+
+# Ignore development/debug files
+*debug*
+*temp*
+*tmp*
+*.bak
+
+# Ignore documentation
+*/docs/*
+*.md
+*.txt
