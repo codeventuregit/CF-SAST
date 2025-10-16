@@ -175,50 +175,44 @@ function activate(context) {
         
         vscode.window.showInformationMessage('Installing CFML SAST Scanner...');
         
-        const pythonExe = process.platform === 'win32' ? 'python' : 'python3';
-        // Validate and sanitize download URL
-        const allowedUrl = 'https://raw.githubusercontent.com/codeventuregit/CF-SAST/main/scripts/cfml_sast_simple.py';
+        const workspacePath = workspaceFolder.uri.fsPath;
+        const targetDir = path.join(workspacePath, 'CFSAST');
+        const targetFile = path.join(targetDir, 'cfml_sast_simple.py');
         
-        const installScript = `
-import os, urllib.request, sys, urllib.parse
-try:
-    # Validate URL
-    url = '${allowedUrl}'
-    parsed = urllib.parse.urlparse(url)
-    if parsed.scheme != 'https' or parsed.netloc != 'raw.githubusercontent.com':
-        raise ValueError('Invalid download URL')
-    
-    os.makedirs('CFSAST', exist_ok=True)
-    urllib.request.urlretrieve(url, 'CFSAST/cfml_sast_simple.py')
-    print('Scanner downloaded successfully')
-except Exception as e:
-    print(f'Error: {e}')
-    sys.exit(1)
-`;
-        
-        exec(`"${pythonExe}" -c "${installScript.replace(/"/g, '\\"')}"`, { 
-            cwd: workspaceFolder.uri.fsPath,
-            timeout: 60000
-        }, (error, stdout, stderr) => {
-            if (error) {
-                if (error.code === 'ETIMEDOUT') {
-                    vscode.window.showErrorMessage('Installation timeout - check network connection');
-                } else if (error.code === 'ENOENT') {
-                    vscode.window.showErrorMessage('Python not found - please install Python 3.6+');
-                } else {
-                    vscode.window.showErrorMessage(`Installation failed: ${error.message}`);
-                }
-                return;
+        try {
+            // Create CFSAST directory
+            if (!fs.existsSync(targetDir)) {
+                fs.mkdirSync(targetDir, { recursive: true });
             }
             
-            // Verify installation
-            const scannerPath = path.join(workspaceFolder.uri.fsPath, 'CFSAST', 'cfml_sast_simple.py');
-            if (fs.existsSync(scannerPath)) {
-                vscode.window.showInformationMessage('✅ CFML SAST Scanner installed successfully!');
-            } else {
-                vscode.window.showErrorMessage('Installation failed - scanner file not created');
-            }
-        });
+            const pythonExe = process.platform === 'win32' ? 'py' : 'python3';
+            const pythonArgs = process.platform === 'win32' ? ['-3'] : [];
+            const script = "import urllib.request; urllib.request.urlretrieve('https://raw.githubusercontent.com/codeventuregit/CF-SAST/main/scripts/cfml_sast_simple.py', 'CFSAST/cfml_sast_simple.py'); print('Downloaded successfully')";
+            
+            exec(`"${pythonExe}" ${pythonArgs.join(' ')} -c "${script}"`, { 
+                cwd: workspacePath,
+                timeout: 60000
+            }, (error, stdout, stderr) => {
+                if (error) {
+                    if (error.code === 'ETIMEDOUT') {
+                        vscode.window.showErrorMessage('Installation timeout - check network connection');
+                    } else if (error.code === 'ENOENT') {
+                        vscode.window.showErrorMessage('Python not found - please install Python 3.6+');
+                    } else {
+                        vscode.window.showErrorMessage(`Installation failed: ${error.message}`);
+                    }
+                    return;
+                }
+                
+                if (fs.existsSync(targetFile)) {
+                    vscode.window.showInformationMessage('✅ CFML SAST Scanner installed successfully!');
+                } else {
+                    vscode.window.showErrorMessage('Installation failed - scanner file not created');
+                }
+            });
+        } catch (error) {
+            vscode.window.showErrorMessage(`Installation failed: ${error.message}`);
+        }
     });
 
     function runScan(files, isWorkspace) {
